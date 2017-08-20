@@ -8,8 +8,8 @@
 	<classpathentry kind="lib" path="/home/joe/yuechun/sootjavadoc-trunk.jar"/>
 	<classpathentry kind="lib" path="/home/joe/yuechun/sootsources-trunk.jar"/>
 	<classpathentry kind="lib" path="/home/joe/yuechun/soot-trunk.jar"/>
-	<classpathentry kind="lib" path="/home/joe/yuechun/64bits-WorkSpace/LogInserterFullJTP/commons-io-2.4.jar"/>
-	<classpathentry kind="lib" path="/home/joe/yuechun/64bits-WorkSpace/LogInserterFullJTP/log4j-1.2.11.jar"/>
-	<classpathentry kind="lib" path="/home/joe/yuechun/64bits-WorkSpace/LogInserterFullJTP/symja-2015-09-26.jar"/>
+	<classpathentry kind="lib" path="/home/joe/Development/git/IntegrityCheck/LogInserterFullJTP/commons-io-2.4.jar"/>
+	<classpathentry kind="lib" path="/home/joe/Development/git/IntegrityCheck/LogInserterFullJTP/log4j-1.2.11.jar"/>
+	<classpathentry kind="lib" path="/home/joe/Development/git/IntegrityCheck/LogInserterFullJTP/symja-2015-09-26.jar"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>
