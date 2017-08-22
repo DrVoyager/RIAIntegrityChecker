@@ -97,10 +97,8 @@ public class LoggerMain {
 			}
 			
 	          PatchingChain units = aBody.getUnits();
-	          //Chain<Trap> traps = aBody.getTraps();
 	          Iterator<Unit> staticScanIt = null;
 	          Unit currStmt = null, firstStmt = null, preStmt, entryStmt;
-	          //Unit start_postion = null;
 
 	          Map<Unit, Unit> ifStmtMap = new HashMap<Unit, Unit>();
 
@@ -121,10 +119,9 @@ public class LoggerMain {
 	          char funcType = getFunctionType(declaredFunction);
 	          
 	          while (staticScanIt.hasNext()) {
-	        	  
+	        	    
 		            currStmt = (Unit)staticScanIt.next();
 		            G.v().out.println("current statement is "+currStmt.toString());
-		            
 		            //skip non-exception identity Stmt
 		            if (currStmt instanceof IdentityStmt){
 		            	Value value = ((IdentityStmt)currStmt).getRightOp();
@@ -164,7 +161,6 @@ public class LoggerMain {
 		            	initLogger(branchLoggerLocal, units, currStmt, "edu.xidian.BranchLogger", "branch", declaredFunction);
 		            	initLogger(invokeLoggerLocal, units, currStmt, "edu.xidian.InvokeLogger", "invoke", declaredFunction);
 		            	initBranchLogger = true;
-		            	//start_postion = currStmt;
 		            }
 		            if(funcType == 'r'){
 						if(currStmt instanceof AssignStmt){
@@ -294,17 +290,43 @@ public class LoggerMain {
 		            }
 	          }
 	          
-//	          Chain traps = aBody.getTraps();
-//		      Iterator<Unit> staticScantrap = traps.snapshotIterator();
-//	            while (staticScantrap.hasNext())
-//	            {
-//	                Trap trap = (Trap) staticScantrap.next();
-//	                Unit tep = trap.getBeginUnit();
-//
-//	                G.v().out.println("trap.getBeginUnit-Say:"+(tep).toString());
-//	                G.v().out.println("trap.getBeginUnit-Set to :"+start_postion.toString());
-//	                trap.setBeginUnit(start_postion);
-//	            }
+	          //adjust trap start position to make sure loggers are declared at any time, including exception handler.
+	          Map<Unit, Integer> unitOrder = new HashMap<Unit, Integer>();// to record the order of each unit, in order to adjust the trap start position.
+              int unitIndex = 0;
+	          Unit startPosition = null;
+	          PatchingChain newUnits = aBody.getUnits();
+	          
+	          Iterator<Unit> newIt = newUnits.iterator();
+	          boolean detectInvokeInitFlag = false;
+	          while (newIt.hasNext()) {
+		            currStmt = (Unit)newIt.next();
+		            G.v().out.println("new body statement is "+currStmt.toString());
+		            if(detectInvokeInitFlag)
+		            {
+		            	startPosition = currStmt;
+		            	detectInvokeInitFlag = false;
+		            }
+		            if(currStmt instanceof InvokeStmt){
+		            	SootMethod method = ((InvokeStmt)currStmt).getInvokeExpr().getMethod();	
+		        	    if(method.toString().contains("edu.xidian.InvokeLogger: void <init>(java.lang.String,java.lang.String)>"))
+		        			  detectInvokeInitFlag = true;
+		            }
+		            unitIndex++;
+		            unitOrder.put(currStmt, unitIndex);
+	          }
+	          
+	          Chain traps = aBody.getTraps();
+		      Iterator<Unit> staticScantrap = traps.snapshotIterator();
+	            while (staticScantrap.hasNext())
+	            {
+	                Trap trap = (Trap) staticScantrap.next();
+	                Unit tep = trap.getBeginUnit();
+	                
+	                G.v().out.println("trap.getBeginUnit-Say:"+(tep).toString());
+	                G.v().out.println("trap.getBeginUnit-Set to :"+startPosition.toString());
+	                if(unitOrder.get(tep)<unitOrder.get(startPosition))
+	                	trap.setBeginUnit(startPosition);
+	            }
 		}
 
 		private boolean isMapReduceFunction(String declaredFunction){
