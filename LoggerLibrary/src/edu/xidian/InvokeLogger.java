@@ -27,7 +27,6 @@ import java.util.Stack;
  *     <callerNumber> <calleeNumber>
  */
 public class InvokeLogger {
-	//static HashMap<String, String> signature2File = new HashMap<String, String>();
 	static HashMap<String, Writer> writers=new HashMap<String, Writer>();
 	static ArrayList<String> logMem = null;
 	static ArrayList<String> spillLogMem = new ArrayList<String>();
@@ -45,11 +44,11 @@ public class InvokeLogger {
 	final String relationType = "relation";
 
 	String callerSignature;
-	//static Stack<Integer> callNumStack = new Stack<Integer>();
 	boolean outputHash = true;
 	private long oldCount;
-	String deliminator = "d\te";
+	String deliminator = "\t";
 	final static String logLocation = "/tmp/traceLog/";
+	int logStatus = 0; // 0 for before invoke; 1 for after invoke 
 	
 	public InvokeLogger(String signature, String type){
 		callerSignature = signature;
@@ -102,11 +101,11 @@ public class InvokeLogger {
 			callCount++;
 			oldCount = currCount;
 			currCount = callCount;
+
+			this.invokeWriter.append(String.valueOf(currCount+deliminator+"0"+deliminator/*+invokedMethod+deliminator*/));
+			this.relationWriter.append(oldCount+deliminator+currCount+"\n");
+			this.logStatus = 0; //start to receive pre-invoke parameter
 			
-			//if(currCount%10==11)
-			//callNumStack.push(callCount);
-				this.invokeWriter.append(String.valueOf(currCount+deliminator+"0"+deliminator/*+invokedMethod+deliminator*/));
-				this.relationWriter.append(oldCount+deliminator+currCount+"\n");
 		}catch(Exception e){
 			e.printStackTrace();
 		}
@@ -115,21 +114,9 @@ public class InvokeLogger {
 	
 	public boolean logAfterInvoke(String invokedMethod){
 		try{
-			//callCount++;
-			//callNumStack.push(callCount);
-			//if(currCount%10==11){
+
 				this.invokeWriter.append(String.valueOf(currCount+deliminator+"1"+deliminator/*+invokedMethod+deliminator*/));
-//				if(writer!=null){
-//					try {
-//						//spillLogMem();
-//						writer.flush();
-//						//writer.close();
-//					} catch (IOException e) {
-//	//					// TODO Auto-generated catch block
-//						e.printStackTrace();
-//					}
-//				}
-			//}
+				this.logStatus = 1; // start to receive after-invoke parameter
 		}catch(Exception e){
 			e.printStackTrace();
 		}
@@ -139,7 +126,6 @@ public class InvokeLogger {
 	
 	public boolean logTrace(String label, String[]params, String[] values){
 		try{
-			//if(currCount%10==11){
 				this.invokeWriter.append(label);
 				for(int i = 0; i<params.length;i++){
 					invokeWriter.append(deliminator);
@@ -148,7 +134,6 @@ public class InvokeLogger {
 					invokeWriter.append((String)values[i]);
 				}
 				invokeWriter.append("\n");
-			//}
 		}catch(Exception e){
 			e.printStackTrace();
 		}
@@ -157,7 +142,6 @@ public class InvokeLogger {
 	
 	public boolean logRawString(String str){
 		try{
-			//if(currCount%10==11)
 			
 				this.invokeWriter.append(str);
 		}catch(Exception e){
@@ -168,15 +152,13 @@ public class InvokeLogger {
 	
 	public boolean logString(String str){
 		try{
-			//appendLogMem(str);
-			//if(currCount%10==11){
+
 			if(str==null)
 				str = new String();
 				if(outputHash)
 					this.invokeWriter.append(str.hashCode()+deliminator);
 				else
 					this.invokeWriter.append(str+deliminator);
-			//}
 				
 		}catch(Exception e){
 			e.printStackTrace();

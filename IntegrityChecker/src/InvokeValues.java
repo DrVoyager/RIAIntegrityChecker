@@ -16,7 +16,6 @@ public class InvokeValues {
 	
 	static int PREPARAM_TYPE = 0;
 	static int POSTPARAM_TYPE=1;
-	static int RETURN_TYPE=2;
 	
 	public ArrayList<String> getParamPreValues() {
 		return paramPreValues;
@@ -26,13 +25,13 @@ public class InvokeValues {
 		this.paramPreValues = paramPreValues;
 	}
 
-	public ArrayList<String> getParamPostValues() {
-		return paramPostValues;
-	}
+//	public ArrayList<String> getParamPostValues() {
+//		return paramPostValues;
+//	}
 
-	public void setParamPostValues(ArrayList<String> paramPostValues) {
-		this.paramPostValues = paramPostValues;
-	}
+//	public void setParamPostValues(ArrayList<String> paramPostValues) {
+//		this.paramPostValues = paramPostValues;
+//	}
 
 	public String[] getParamId() {
 		return paramId;
@@ -95,9 +94,9 @@ public class InvokeValues {
 			if(parts[1].equals("0"))
 				paramPreValues.add(parts[i]);
 			if(parts[1].equals("1")){
-				if(i-2<paramPreValues.size())
-					paramPostValues.add(parts[i]);
-				else
+//				if(i-2<paramPreValues.size())
+//					paramPostValues.add(parts[i]);
+//				else
 					returnValue = parts[i];
 			}
 		}
@@ -111,8 +110,8 @@ public class InvokeValues {
 		Map<String, String> constraints = new HashMap<String, String>();
 		if(type == PREPARAM_TYPE){
 			constraints.put(paramId[index], paramPreValues.get(index));
-		}else if(type == POSTPARAM_TYPE){
-			constraints.put(paramId[index], paramPostValues.get(index));
+		//}else if(type == POSTPARAM_TYPE){
+			//constraints.put(paramId[index], paramPostValues.get(index));
 		}else{
 			constraints.put(returnId, returnValue);
 		}
@@ -127,14 +126,27 @@ public class InvokeValues {
 			if(type == PREPARAM_TYPE){
 				constraints.put(paramId[i], paramPreValues.get(i));
 			}
-			if(type == POSTPARAM_TYPE){
-				constraints.put(paramId[i], paramPostValues.get(i));
-			}
+			//if(type == POSTPARAM_TYPE){
+			//	constraints.put(paramId[i], paramPostValues.get(i));
+			//}
 		}
-		if(type == POSTPARAM_TYPE || type== this.RETURN_TYPE){
+		if(type == POSTPARAM_TYPE ){
 			if(returnValue!=null)
 				constraints.put(returnId, returnValue);
 		}
 		return constraints;
+	}
+
+	public static long getCallNumber(String invokeLine) {
+		String[] parts = invokeLine.split(SystemConfig.deliminator);
+		long callNumber = -1;
+		if(parts[0].startsWith("S"))
+			callNumber = Integer.parseInt(parts[0].substring(1));
+		else
+			callNumber = Integer.parseInt(parts[0]);
+		if(parts[1].equals("0"))
+			return callNumber;
+		else
+			return -1*callNumber;
 	}
 }

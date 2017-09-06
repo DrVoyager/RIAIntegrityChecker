@@ -20,5 +20,15 @@ public class BranchTraceLog extends TraceLog {
 	
 	}
 	
+	public static long getCallNumber(String line){
+		long callNumber;
+		String[] parts = line.split(SystemConfig.deliminator);
+		if(parts[0].startsWith("S"))
+			callNumber = Integer.parseInt(parts[0].substring(1));
+		else
+			callNumber = Integer.parseInt(parts[0]); 
+		return callNumber;
+	}
+	
 	
 }

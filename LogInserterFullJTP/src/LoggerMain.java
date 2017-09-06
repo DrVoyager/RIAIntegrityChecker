@@ -222,17 +222,13 @@ public class LoggerMain {
 			    				for(Value v: parameters){
 				        			logDataBefore(v, outputLoggerLocal,units, currStmt);
 				        			paramIndex++;
-//			                        Type type = v.getType();
-//			    					if(type instanceof RefLikeType){
-//			    						searchConstraint(Exp2String(v,false),true);
-//			    					}
 			    				}
 		    				}
 		        		}else{// normal function invoke
 		        			InvokeExpr ie = ((InvokeStmt)currStmt).getInvokeExpr();
 		    				List<Value> parameters = ie.getArgs();
 		    				logInvokeBefore(parameters, invokeLoggerLocal,units, currStmt,ie.getMethod().getSignature());
-		        			logInvokeAfter(parameters, invokeLoggerLocal, units, currStmt, ie.getMethod().getSignature());
+		        			logInvokeAfter(new ArrayList<Value>(), invokeLoggerLocal, units, currStmt, ie.getMethod().getSignature());
 		        		}
 		            }
 					if(currStmt instanceof AssignStmt){
@@ -243,10 +239,9 @@ public class LoggerMain {
 							
 		    				List<Value> parameters = ie.getArgs();
 		    					logInvokeBefore(parameters, invokeLoggerLocal,units, currStmt,ie.getMethod().getSignature());
-			        			parameters.add(returnVal);
-		    					logInvokeAfter(parameters, invokeLoggerLocal, units, currStmt,ie.getMethod().getSignature());
-			        			
-			        			//logInvokeAfter( Arrays.asList(returnVal), invokeLoggerLocal, units, currStmt);
+			        			ArrayList<Value> returnList = new ArrayList<Value>();
+			        			returnList.add(returnVal);
+		    					logInvokeAfter(returnList, invokeLoggerLocal, units, currStmt,ie.getMethod().getSignature());			        			
 						}
 					}
 		            if(currStmt instanceof RetStmt||currStmt instanceof ReturnStmt||currStmt instanceof ReturnVoidStmt){
@@ -468,23 +463,9 @@ public class LoggerMain {
 			InvokeStmt insertedStmt = Jimple.v().newInvokeStmt(
 					Jimple.v().newVirtualInvokeExpr
 			           (invokeLoggerLocal, toCall.makeRef(), Arrays.asList(StringConstant.v(invokeMethod))));
-			//Unit newCurrStmt = newInvokeStmt;
 			units.insertAfter(insertedStmt, inFuncCurStmt);
 			inFuncCurStmt = insertedStmt;
 			for(Value v: parameters){
-//				 toCall = Scene.v().getMethod
-//					      ("<edu.xidian.InvokeLogger: boolean logRawString(java.lang.String)>");
-//				//inserted code: loggerLocal.logString("\tparams[i]\t");
-//				String paramName = "unknown";
-//				if(v instanceof Local){
-//					paramName = ((Local)v).getName();
-//				}
-//				insertedStmt = Jimple.v().newInvokeStmt(
-//						Jimple.v().newVirtualInvokeExpr
-//				           (invokeLoggerLocal, toCall.makeRef(), Arrays.asList(StringConstant.v(paramName))));
-//				units.insertAfter(insertedStmt, inFuncCurStmt);
-//				inFuncCurStmt = insertedStmt;
-				
 				insertedStmt = prepareInsertStmt(v, invokeLoggerLocal, "edu.xidian.InvokeLogger");
 				units.insertAfter(insertedStmt, inFuncCurStmt);
 				inFuncCurStmt = insertedStmt;
@@ -498,7 +479,6 @@ public class LoggerMain {
 					units.insertAfter(newInvokeStmt, inFuncCurStmt);
 		}
 
-
 		private void logInvokeBefore(List<Value> parameters, Local invokeLoggerLocal,
 				PatchingChain units, Unit currStmt, String invokeMethod) {
 			SootMethod toCall = Scene.v().getMethod
@@ -506,22 +486,8 @@ public class LoggerMain {
 			InvokeStmt newInvokeStmt = Jimple.v().newInvokeStmt(
 					Jimple.v().newVirtualInvokeExpr
 			           (invokeLoggerLocal, toCall.makeRef(), Arrays.asList(StringConstant.v(invokeMethod))));
-			//Unit newCurrStmt = newInvokeStmt;
 			units.insertBefore(newInvokeStmt, currStmt);
-			
 			for(Value v: parameters){
-//				toCall = Scene.v().getMethod
-//					      ("<edu.xidian.InvokeLogger: boolean logRawString(java.lang.String)>");
-//				//inserted code: loggerLocal.logString("\tparams[i]\t");
-//				String paramName = "unknown";
-//				if(v instanceof Local){
-//				 paramName = ((Local)v).getName();
-//				}
-//				newInvokeStmt = Jimple.v().newInvokeStmt(
-//						Jimple.v().newVirtualInvokeExpr
-//				           (invokeLoggerLocal, toCall.makeRef(), Arrays.asList(StringConstant.v(paramName))));
-//				units.insertBefore(newInvokeStmt, currStmt);
-				
 				Stmt insertedStmt = prepareInsertStmt(v, invokeLoggerLocal, "edu.xidian.InvokeLogger");
 				units.insertBefore(insertedStmt, currStmt);
 			}

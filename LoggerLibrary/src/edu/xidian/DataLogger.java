@@ -26,7 +26,7 @@ public class DataLogger {
 	long callNumber = 0;
 	boolean outputHash = false;
 	
-	String deliminator = "d\te";
+	String deliminator = "\t";
 
 
 	public DataLogger(String signature, String type){

@@ -20,7 +20,7 @@ public class BranchLogger {
 	static ArrayList<String> spillLogMem = new ArrayList<String>();
 	String fileName = null;
 	File file = null;
-	String deliminator = "d\te";
+	String deliminator = "\t";
 	
 
 	long callNumber = 0;
