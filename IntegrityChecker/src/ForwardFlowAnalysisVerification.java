@@ -181,9 +181,7 @@ public abstract class ForwardFlowAnalysisVerification<N,A> extends FlowAnalysis<
     		try {
     			branchLogIt = FileUtils.lineIterator(branchFile, "UTF-8");
     			invokeLogIt = FileUtils.lineIterator(invokeFile,"UTF-8");
-    		} catch (IOException e) {
-    			e.printStackTrace();
-    		}
+    		
 
 	        
 	        long currCallNumber = -1;
@@ -196,7 +194,12 @@ public abstract class ForwardFlowAnalysisVerification<N,A> extends FlowAnalysis<
 	        	String invokeLine="";
 	        	if(invokeLogIt.hasNext()){
 	        		invokeLine = invokeLogIt.next();
-	        		long tempCallNumber = InvokeValues.getCallNumber(invokeLine);
+	        		long tempCallNumber;
+	        		try{
+	        			tempCallNumber = InvokeValues.getCallNumber(invokeLine);
+	        		}catch(Exception e){
+	        			break;
+	        		}
 	        		if(readStatus==0){
 	        			if(tempCallNumber == nextCallNumber //find the next call
 	        					|| nextCallNumber == -1     // begin iterating the invoke file
@@ -211,13 +214,13 @@ public abstract class ForwardFlowAnalysisVerification<N,A> extends FlowAnalysis<
 	        			
 	        			if(-1*tempCallNumber == currCallNumber){
 	        				
-	        				readStatus = 0;
 	    		        	//with 1-testRatio/1000 probability skip simulating the current invocation
 	    		        	if(Math.random()*1000>=SystemConfig.testRatio)	        		
 	    		        		continue;
 	    		        	
 	        				postInvokeLine = invokeLine;
 	        				processInvoke(preInvokeLine, postInvokeLine);
+	        				readStatus = 0;
 	        			}else if(!setNextCallNo && nextCallNumber<tempCallNumber ){
 	        				nextCallNumber = tempCallNumber;
 	        				setNextCallNo = true;
@@ -226,72 +229,24 @@ public abstract class ForwardFlowAnalysisVerification<N,A> extends FlowAnalysis<
 	        	}else{
 	        		if(currCallNumber >= nextCallNumber)
 	        			break;
-	        		else
+	        		else{
+	        			if(invokeLogIt!=null)
+	        				invokeLogIt.close();
 	        			invokeLogIt = FileUtils.lineIterator(invokeFile,"UTF-8");
+	        		}
 	        	}
 	        }
 	        
-	        
-//	        bufTrace = getNextBranchTraceLog();
-//            //currCallNumber = bufTrace.getCallNumber();
-//
-//	        while(bufTrace!=null){
-//	        	//make sure a new invoke
-//	            assert currCallNumber != bufTrace.getCallNumber();
-//	            currCallNumber  = bufTrace.getCallNumber();
-//
-//		            InvokeValues invokeValues = new InvokeValues();
-//		            String preInvoke="", postInvoke="";
-//		            //obtain new invoke pair
-//		        	if(invokeLogIt.hasNext()){
-//		        		preInvoke = invokeLogIt.next();
-//		        		if(preInvokeParamNo ==0)
-//		        			preInvokeParamNo = preInvoke.split(SystemConfig.deliminator).length;
-//
-//		        		//G.v().out.println("processed string is "+preInvoke);
-//		        		if(invokeLogIt.hasNext()){
-//			        		postInvoke = invokeLogIt.next();
-//			        		if(postInvokeParamNo == 0)
-//			        			postInvokeParamNo = postInvoke.split(SystemConfig.deliminator).length;
-//			        		//G.v().out.println("processed string is "+postInvoke);
-//			        	}else{
-//			        		//fail safe: to avoid incomplete log file
-//			        		bufTrace = null;
-//			        		continue;
-//			        	}
-//		        	}else{
-//		        		//end of invoke log file
-//		        		bufTrace = null;
-//		        		continue;
-//		        	}
-//		        	
-//
-//		        	//fail safe: to avoid incomplete invoke log file
-//		        	if(preInvoke.split(SystemConfig.deliminator).length!=preInvokeParamNo||postInvoke.split(SystemConfig.deliminator).length!=postInvokeParamNo){
-//		        		bufTrace = null;
-//		        		continue;
-//		        	}
-//		        	
-//		        	invokeValues.processLine(preInvoke);
-//		        	invokeValues.processLine(postInvoke);
-//		        	auditedFunNo++;
-//		        	
-//		        	//with 1-testRatio/1000 probability skip simulating the current invocation
-//		        	if(Math.random()*1000>=SystemConfig.testRatio){
-//		        		
-//		        		while(bufTrace.getCallNumber()==invokeValues.getCallNumber()){
-//		        			bufTrace = getNextBranchTraceLog();
-//		        		}		        		
-//		        		continue;
-//		        	}
-//        	
-//		        	//simulate
-//		        	simulate(invokeValues);
-//	        }
-	        
-	        branchLogIt.close();
-	        invokeLogIt.close();
-        //}
+    		}catch (IOException e) {
+    			e.printStackTrace();
+    		}finally{
+    	        
+    	        LineIterator.closeQuietly(branchLogIt);
+    	        LineIterator.closeQuietly(invokeLogIt);
+    	        for(String key: logReaders.keySet()){
+    	        	logReaders.get(key).close();
+    	        }
+    	    }
     }
         
     private void processInvoke(String preInvokeLine, String postInvokeLine) {
@@ -536,6 +491,7 @@ public abstract class ForwardFlowAnalysisVerification<N,A> extends FlowAnalysis<
 	private TraceLog getNextBranchTraceLog(long callNo) {
 		if(!branchLogIt.hasNext())
         try{
+        	branchLogIt.close();
 			branchLogIt = FileUtils.lineIterator(branchFile, "UTF-8");
 
     	}catch(IOException e){
