@@ -1,0 +1,11 @@
+======================HOW TO APPLY RIA ON HADOOP EXAMPLE APPLICATIONS============
+
+This example applies RIA into Hadoop 1.0.2 example applications, hadoop-examples-1.0.2.jar
+
+To run this example,
+1. Open the protects LoggerLibrary, LogInserterFullJTP and IntegrityChecker with Eclipse Standard with the Kepler Version. Make sure class files are builted under the bin folder of each project.
+2. Set up the environment path in the transform_example.sh and the check_example.sh, including WORK_SPACE (the current example directory), JAVA_HOME (ensure the jre/lib/rt.jar and jre/lib/jce.jar can be found under $JAVA_HOME), and the address of the Hadoop server and the log collection server.
+3. Run transform_example.sh to generate the PWL (program with log) of hadoop example applications, taggedExample.jar. It will be transmitted to the master host of the hadoop server automatically.
+4. On the hadoop server, run the transformed applications, including Wordcount, Pi, Terasort. Use the collect_cluster_tracelog.sh to collect logs from hadoop clusters. 
+5. Under the example directory, run the check_example.sh to check the integrity of the execution. It will automatically collect the logs from the hadoop server and check the integrity based on the log.
+
