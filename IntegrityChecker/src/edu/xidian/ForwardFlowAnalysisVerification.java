@@ -135,7 +135,7 @@ public abstract class ForwardFlowAnalysisVerification<N,A> extends FlowAnalysis<
         else {
         	if (currFile.isFile()&&currFile.getAbsolutePath().contains(methodSig)&&currFile.getAbsolutePath().contains("branch_")){
              try{
-        		processFile(currFile.getAbsolutePath());
+        		fastProcessFile(currFile.getAbsolutePath());
              }catch(Exception e){
             	 e.printStackTrace();
              }
@@ -159,12 +159,8 @@ public abstract class ForwardFlowAnalysisVerification<N,A> extends FlowAnalysis<
      * TODO: need to process recursion call
      */
     
-    //Analyze execution of function "methodSig"
-    protected void processFile(String filePath) throws Exception
+    protected void fastProcessFile(String filePath)
     {
-
-
-
         	branchFile = new File(filePath);
         	
         	fileSuffix = Integer.parseInt(filePath.substring(filePath.lastIndexOf("_")+1));
@@ -176,6 +172,71 @@ public abstract class ForwardFlowAnalysisVerification<N,A> extends FlowAnalysis<
         	if(!invokeFile.exists()){
             	G.v().out.println("invoke file does not exist:"+invokeFileName);
 
+        		return;
+        	}
+            
+    		try {
+    			branchLogIt = FileUtils.lineIterator(branchFile, "UTF-8");
+    			invokeLogIt = FileUtils.lineIterator(invokeFile,"UTF-8");
+
+		        long currCallNumber = -1; //current call number looking for the other part
+		        long nextCallNumber = -1; //next call number to be found the other part when the current call number is done
+		        
+		        //boolean setNextCallNo = false; //whether has set the next call number. Related to the above variable.
+		        String nextPreInvokeLine = "";
+		        String preInvokeLine = "";
+		        String postInvokeLine = "";
+		        int readStatus = 0; //0: not identify pre-invoke CallNo; 1: identify pre-invoke CallNo, but not post-invokeCallNo
+	        	String invokeLine="";
+	    		long tempCallNumber;
+	    		
+	    		while(invokeLogIt.hasNext()){
+	    			invokeLine = invokeLogIt.next();
+					tempCallNumber = InvokeValues.getCallNumber(invokeLine);
+	
+					if(currCallNumber == -1){ //preinvoke
+						currCallNumber = tempCallNumber;
+						preInvokeLine = invokeLine;
+					}else if(-1*tempCallNumber == currCallNumber){ //find the matching postinvoke
+			        	//with 1-testRatio/1000 probability skip simulating the current invocation
+			        	if(Math.random()*1000>=SystemConfig.testRatio){	        		
+	        		
+	        				currCallNumber = -1;
+	        				continue;
+			        	}
+			        	
+	    				postInvokeLine = invokeLine;
+	    				processInvoke(preInvokeLine, postInvokeLine);
+	    				currCallNumber = -1;
+					}else{ //find the preinvoke not find the machine post invoke, look the next
+						continue; //TODO: this implementation skips the recursive function call.
+					}
+	    		}
+    		}catch (Exception e) {
+    			e.printStackTrace();
+    		}finally{
+    	        
+    	        LineIterator.closeQuietly(branchLogIt);
+    	        LineIterator.closeQuietly(invokeLogIt);
+    	        for(String key: logReaders.keySet())
+    	        	logReaders.get(key).close();
+    	    }
+    	   
+    }
+    
+    //Analyze execution of function "methodSig"
+    protected void processFile(String filePath) throws Exception
+    {
+
+        	branchFile = new File(filePath);        	
+        	fileSuffix = Integer.parseInt(filePath.substring(filePath.lastIndexOf("_")+1));
+        	//find the invoke_ file that records the invocation of function methodSig
+        	String invokeFileName = filePath.replace("branch_", "invoke_");
+
+        	File invokeFile = new File(invokeFileName);
+        	
+        	if(!invokeFile.exists()){
+            	G.v().out.println("invoke file does not exist:"+invokeFileName);
         		return;
         	}
             
