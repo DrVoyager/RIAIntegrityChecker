@@ -133,8 +133,9 @@ public abstract class ForwardFlowAnalysisVerification<N,A> extends FlowAnalysis<
         	}
         }
         else {
-        	if (currFile.isFile()&&currFile.getAbsolutePath().contains(methodSig)&&currFile.getAbsolutePath().contains("branch_")){
+        	if (currFile.isFile()&&currFile.getAbsolutePath().contains(methodSig)&&currFile.getAbsolutePath().contains("invoke_")){
              try{
+            	G.v().out.println("analysis currFile "+ currFile.getAbsolutePath());
         		fastProcessFile(currFile.getAbsolutePath());
              }catch(Exception e){
             	 e.printStackTrace();
@@ -159,18 +160,18 @@ public abstract class ForwardFlowAnalysisVerification<N,A> extends FlowAnalysis<
      * TODO: need to process recursion call
      */
     
-    protected void fastProcessFile(String filePath)
+    protected void fastProcessFile(String invokeFileName)
     {
-        	branchFile = new File(filePath);
         	
-        	fileSuffix = Integer.parseInt(filePath.substring(filePath.lastIndexOf("_")+1));
+        	fileSuffix = Integer.parseInt(invokeFileName.substring(invokeFileName.lastIndexOf("_")+1));
         	//find the invoke_ file that records the invocation of function methodSig
-        	String invokeFileName = filePath.replace("branch_", "invoke_");
+        	String branchFileName = invokeFileName.replace("invoke_", "branch_");
+        	branchFile = new File(branchFileName);
 
         	File invokeFile = new File(invokeFileName);
         	
-        	if(!invokeFile.exists()){
-            	G.v().out.println("invoke file does not exist:"+invokeFileName);
+        	if(!branchFile.exists()){
+            	//G.v().out.println("branch file does not exist:"+invokeFileName);
 
         		return;
         	}
@@ -192,7 +193,11 @@ public abstract class ForwardFlowAnalysisVerification<N,A> extends FlowAnalysis<
 	    		
 	    		while(invokeLogIt.hasNext()){
 	    			invokeLine = invokeLogIt.next();
-					tempCallNumber = InvokeValues.getCallNumber(invokeLine);
+	    			try{
+	    				tempCallNumber = InvokeValues.getCallNumber(invokeLine);
+	    			}catch (Exception e){
+	    				break;
+	    			}
 	
 					if(currCallNumber == -1){ //preinvoke
 						currCallNumber = tempCallNumber;
@@ -204,7 +209,6 @@ public abstract class ForwardFlowAnalysisVerification<N,A> extends FlowAnalysis<
 	        				currCallNumber = -1;
 	        				continue;
 			        	}
-			        	
 	    				postInvokeLine = invokeLine;
 	    				processInvoke(preInvokeLine, postInvokeLine);
 	    				currCallNumber = -1;
@@ -224,92 +228,92 @@ public abstract class ForwardFlowAnalysisVerification<N,A> extends FlowAnalysis<
     	   
     }
     
-    //Analyze execution of function "methodSig"
-    protected void processFile(String filePath) throws Exception
-    {
-
-        	branchFile = new File(filePath);        	
-        	fileSuffix = Integer.parseInt(filePath.substring(filePath.lastIndexOf("_")+1));
-        	//find the invoke_ file that records the invocation of function methodSig
-        	String invokeFileName = filePath.replace("branch_", "invoke_");
-
-        	File invokeFile = new File(invokeFileName);
-        	
-        	if(!invokeFile.exists()){
-            	G.v().out.println("invoke file does not exist:"+invokeFileName);
-        		return;
-        	}
-            
-    		try {
-    			branchLogIt = FileUtils.lineIterator(branchFile, "UTF-8");
-    			invokeLogIt = FileUtils.lineIterator(invokeFile,"UTF-8");
-    		
-
-	        
-	        long currCallNumber = -1;
-	        long nextCallNumber = -1;
-	        String preInvokeLine = "";
-	        String postInvokeLine = "";
-	        int readStatus = 0; //0: not identify pre-invoke CallNo; 1: identify pre-invoke CallNo, but not post-invokeCallNo
-	        boolean setNextCallNo = false;
-	        while(true){
-	        	String invokeLine="";
-	        	if(invokeLogIt.hasNext()){
-	        		invokeLine = invokeLogIt.next();
-	        		long tempCallNumber;
-	        		try{
-	        			tempCallNumber = InvokeValues.getCallNumber(invokeLine);
-	        		}catch(Exception e){
-	        			break;
-	        		}
-	        		if(readStatus==0){
-	        			if(tempCallNumber == nextCallNumber //find the next call
-	        					|| nextCallNumber == -1     // begin iterating the invoke file
-	        					||tempCallNumber>currCallNumber //no next call, just find the next bigger call
-	        					){ 
-	        				currCallNumber = tempCallNumber;
-	        				preInvokeLine = invokeLine;
-	        				readStatus = 1;
-	        				setNextCallNo = false;
-	        			}
-	        		}else if(readStatus == 1){
-	        			
-	        			if(-1*tempCallNumber == currCallNumber){
-	        				
-	    		        	//with 1-testRatio/1000 probability skip simulating the current invocation
-	    		        	if(Math.random()*1000>=SystemConfig.testRatio)	        		
-	    		        		continue;
-	    		        	
-	        				postInvokeLine = invokeLine;
-	        				processInvoke(preInvokeLine, postInvokeLine);
-	        				readStatus = 0;
-	        			}else if(!setNextCallNo && nextCallNumber<tempCallNumber ){
-	        				nextCallNumber = tempCallNumber;
-	        				setNextCallNo = true;
-	        			}
-	        		}
-	        	}else{
-	        		if(currCallNumber >= nextCallNumber)
-	        			break;
-	        		else{
-	        			if(invokeLogIt!=null)
-	        				invokeLogIt.close();
-	        			invokeLogIt = FileUtils.lineIterator(invokeFile,"UTF-8");
-	        		}
-	        	}
-	        }
-	        
-    		}catch (IOException e) {
-    			e.printStackTrace();
-    		}finally{
-    	        
-    	        LineIterator.closeQuietly(branchLogIt);
-    	        LineIterator.closeQuietly(invokeLogIt);
-    	        for(String key: logReaders.keySet()){
-    	        	logReaders.get(key).close();
-    	        }
-    	    }
-    }
+//    //Analyze execution of function "methodSig"
+//    protected void processFile(String filePath) throws Exception
+//    {
+//
+//        	branchFile = new File(filePath);        	
+//        	fileSuffix = Integer.parseInt(filePath.substring(filePath.lastIndexOf("_")+1));
+//        	//find the invoke_ file that records the invocation of function methodSig
+//        	String invokeFileName = filePath.replace("branch_", "invoke_");
+//
+//        	File invokeFile = new File(invokeFileName);
+//        	
+//        	if(!invokeFile.exists()){
+//            	G.v().out.println("invoke file does not exist:"+invokeFileName);
+//        		return;
+//        	}
+//            
+//    		try {
+//    			branchLogIt = FileUtils.lineIterator(branchFile, "UTF-8");
+//    			invokeLogIt = FileUtils.lineIterator(invokeFile,"UTF-8");
+//    		
+//
+//	        
+//	        long currCallNumber = -1;
+//	        long nextCallNumber = -1;
+//	        String preInvokeLine = "";
+//	        String postInvokeLine = "";
+//	        int readStatus = 0; //0: not identify pre-invoke CallNo; 1: identify pre-invoke CallNo, but not post-invokeCallNo
+//	        boolean setNextCallNo = false;
+//	        while(true){
+//	        	String invokeLine="";
+//	        	if(invokeLogIt.hasNext()){
+//	        		invokeLine = invokeLogIt.next();
+//	        		long tempCallNumber;
+//	        		try{
+//	        			tempCallNumber = InvokeValues.getCallNumber(invokeLine);
+//	        		}catch(Exception e){
+//	        			break;
+//	        		}
+//	        		if(readStatus==0){
+//	        			if(tempCallNumber == nextCallNumber //find the next call
+//	        					|| nextCallNumber == -1     // begin iterating the invoke file
+//	        					||tempCallNumber>currCallNumber //no next call, just find the next bigger call
+//	        					){ 
+//	        				currCallNumber = tempCallNumber;
+//	        				preInvokeLine = invokeLine;
+//	        				readStatus = 1;
+//	        				setNextCallNo = false;
+//	        			}
+//	        		}else if(readStatus == 1){
+//	        			
+//	        			if(-1*tempCallNumber == currCallNumber){
+//	        				
+//	    		        	//with 1-testRatio/1000 probability skip simulating the current invocation
+//	    		        	if(Math.random()*1000>=SystemConfig.testRatio)	        		
+//	    		        		continue;
+//	    		        	
+//	        				postInvokeLine = invokeLine;
+//	        				processInvoke(preInvokeLine, postInvokeLine);
+//	        				readStatus = 0;
+//	        			}else if(!setNextCallNo && nextCallNumber<tempCallNumber ){
+//	        				nextCallNumber = tempCallNumber;
+//	        				setNextCallNo = true;
+//	        			}
+//	        		}
+//	        	}else{
+//	        		if(currCallNumber >= nextCallNumber)
+//	        			break;
+//	        		else{
+//	        			if(invokeLogIt!=null)
+//	        				invokeLogIt.close();
+//	        			invokeLogIt = FileUtils.lineIterator(invokeFile,"UTF-8");
+//	        		}
+//	        	}
+//	        }
+//	        
+//    		}catch (IOException e) {
+//    			e.printStackTrace();
+//    		}finally{
+//    	        
+//    	        LineIterator.closeQuietly(branchLogIt);
+//    	        LineIterator.closeQuietly(invokeLogIt);
+//    	        for(String key: logReaders.keySet()){
+//    	        	logReaders.get(key).close();
+//    	        }
+//    	    }
+//    }
         
     private void processInvoke(String preInvokeLine, String postInvokeLine) {
 
@@ -325,9 +329,14 @@ public abstract class ForwardFlowAnalysisVerification<N,A> extends FlowAnalysis<
 //				e.printStackTrace();
 //			}
 //        }
-        auditedFunNo++;
         bufTrace = getNextBranchTraceLog(invokeValues.getCallNumber());
+        if(bufTrace==null){
+        	G.v().out.println("$$$$$$$$$$$$$$$$$$$$$WARNING: NO BRANCH LOG FOUND$$$$$$$$$$$$$$$$$$$$$$$$"+invokeValues.getCallNumber());
+        	return;
+        }
+        auditedFunNo++;
         simulate(invokeValues);
+        
 	}
 	private void simulate(InvokeValues invokeValues) {
         List<N> heads = graph.getHeads();
@@ -353,6 +362,7 @@ public abstract class ForwardFlowAnalysisVerification<N,A> extends FlowAnalysis<
         	
         	//Fill in the constraint when entering the invocation
         	//(Obtain the variable name of invocation parameters) 
+        	//G.v().out.println("SPEED Test 1"+System.currentTimeMillis());
         	if (currentNode instanceof IdentityStmt){
         		IdentityStmt is = (IdentityStmt) currentNode;
 				Value rightOp = is.getRightOp();
@@ -363,6 +373,7 @@ public abstract class ForwardFlowAnalysisVerification<N,A> extends FlowAnalysis<
 					insertConstraints(invokeValues.getConstraint(pr.getIndex(), InvokeValues.PREPARAM_TYPE));
 				}
             }
+        	//G.v().out.println("SPEED Test 2");
 
         	//Check constraints when returning from the invocation
         	//(Obtain the variable name of return value)       	
@@ -373,7 +384,8 @@ public abstract class ForwardFlowAnalysisVerification<N,A> extends FlowAnalysis<
             	}
         		checkConstraints(invokeValues.getConstraints(InvokeValues.POSTPARAM_TYPE));
             }
-        	
+        	//G.v().out.println("SPEED Test 3");
+
           	// assignment with an invoke statement:
 			// obtain the invoke parameters from callee's invoke and relation log
 			// check pre invoke log aginst constraints
@@ -403,6 +415,8 @@ public abstract class ForwardFlowAnalysisVerification<N,A> extends FlowAnalysis<
 	        		}
 				}
 			}
+        	//G.v().out.println("SPEED Test 4");
+
         	// invoke statement:
 			// obtain the invoke parameters from callee's invoke and relation log
 			// check pre invoke log aginst constraints
@@ -426,14 +440,33 @@ public abstract class ForwardFlowAnalysisVerification<N,A> extends FlowAnalysis<
     	        	insertConstraints(invokeValues.getConstraints(InvokeValues.POSTPARAM_TYPE));
         		}
         	}
+        	//long previousTime=System.currentTimeMillis();
+        	//long currentTime = System.currentTimeMillis();
         	
+        	//G.v().out.println("SPEED Test 5" + (currentTime-previousTime));
+        	//previousTime = currentTime;
+
         	List<N> successors = graph.getSuccsOf(currentNode);
         	//branch statement:
         	// determine the next statement node
         	if(isBranchStmt(currentNode)){ //multiple successors, branch statement
         		curTrace = bufTrace;
+        		
+        		//currentTime = System.currentTimeMillis();
+            	//G.v().out.println("SPEED Test 6" + (currentTime-previousTime));
+            	//previousTime = currentTime;
+
         		bufTrace = getNextBranchTraceLog(curTrace.getCallNumber());
+        		
+        		//currentTime = System.currentTimeMillis();
+            	//G.v().out.println("SPEED Test 7" + (currentTime-previousTime));
+            	//previousTime = currentTime;
+
         		nextNode = getNextUpdateAndCheckConstraint(currentNode, successors, curTrace);
+        		//currentTime = System.currentTimeMillis();
+            	//G.v().out.println("SPEED Test 8" + (currentTime-previousTime));
+            	//previousTime = currentTime;
+
             	//G.v().out.println("   current Node is a branch, the next Node is "+nextNode.toString());
         	}else{
         		if(successors==null||successors.size()==0){ //end of graph
@@ -448,8 +481,19 @@ public abstract class ForwardFlowAnalysisVerification<N,A> extends FlowAnalysis<
             		}
             	}
         		//Normal statement or branch statement, update constraint
+        		//currentTime = System.currentTimeMillis();
+            	//G.v().out.println("SPEED Test 9" + (currentTime-previousTime));
+            	//previousTime = currentTime;
+            	
         		updateConstraints(currentNode);
+        		//currentTime = System.currentTimeMillis();
+            	//G.v().out.println("SPEED Test 10" + (currentTime-previousTime));
+            	//previousTime = currentTime;
         	}
+        	
+    		//currentTime = System.currentTimeMillis();
+        	//G.v().out.println("SPEED Test 11" + (currentTime-previousTime));
+        	//previousTime = currentTime;
         	currentNode = nextNode;
         }		
 	}
@@ -492,6 +536,7 @@ public abstract class ForwardFlowAnalysisVerification<N,A> extends FlowAnalysis<
 		if(relationIt==null)
 			return null;
 		Long calleeNumber = -1L;
+		//G.v().out.println("START SEARCH FOR RELATION");
 		while(relationIt.hasNext())
 		{
 			String[] relationMap = relationIt.next().split(SystemConfig.deliminator);
@@ -505,6 +550,8 @@ public abstract class ForwardFlowAnalysisVerification<N,A> extends FlowAnalysis<
 				break;
 			}
 		}
+		//G.v().out.println("FINISH SEARCH FOR RELATION");
+
 		if(calleeNumber != -1L){
 			LineIterator invokeIt = getReader("invoke_"+ie.getMethod().getSignature());
 			while(invokeIt.hasNext()){
@@ -523,11 +570,17 @@ public abstract class ForwardFlowAnalysisVerification<N,A> extends FlowAnalysis<
 				}
 			}
 		}
+		//G.v().out.println("FINISH SEARCH FOR INVOKE");
+
 		if(preInvokeStr!=null && postInvokeStr!=null){
+			//G.v().out.println("FOUND  INVOKE");
+
 			String[] logStrings = {preInvokeStr, postInvokeStr};
 			return logStrings;
-		}else
+		}else{
+			//G.v().out.println("NOT FOUND  INVOKE "+ie.getMethod().getSignature());
 			return null;		
+		}
     }
     
 	private boolean obtainInvokeeParams(InvokeValues invokeeValues) {
@@ -551,19 +604,29 @@ public abstract class ForwardFlowAnalysisVerification<N,A> extends FlowAnalysis<
 	}
 
 	private TraceLog getNextBranchTraceLog(long callNo) {
-		if(!branchLogIt.hasNext())
-        try{
-        	branchLogIt.close();
-			branchLogIt = FileUtils.lineIterator(branchFile, "UTF-8");
-
-    	}catch(IOException e){
-    		e.printStackTrace();
-    	}
+		//boolean newIT=false;
+//		if(!branchLogIt.hasNext()){
+//	        //newIT = true;
+//			try{
+//	        	//G.v().out.println("#######WARNING, LOOP AROUND BRANCH##########"+branchFile+" CALLNO "+callNo);
+//	        	branchLogIt.close();
+//				branchLogIt = FileUtils.lineIterator(branchFile, "UTF-8");
+//	
+//	    	}catch(IOException e){
+//	    		e.printStackTrace();
+//	    	}
+//		}
         while (branchLogIt.hasNext()) {
-        String line = branchLogIt.nextLine();
-        BranchTraceLog btl = new BranchTraceLog(line);
-        if (btl.getCallNumber()==callNo)
-        	return btl;
+	        String line = branchLogIt.nextLine();
+	        BranchTraceLog btl = new BranchTraceLog(line);
+	        if (btl.getCallNumber()==callNo){
+	        	//if(newIT)
+		        	//G.v().out.println("#######FOUND BRANCH##########"+branchFile+" CALLNO "+callNo);
+
+	        	return btl;
+	        }else if(btl.getCallNumber()>callNo){
+	        	return null;
+	        }
         }
         return null;
 	}

@@ -59,7 +59,7 @@ public class CheckerMain {
 			String declaredMethod = aBody.getMethod().toString();
 			
 			G.v().out.println("start checking method ..."+aBody.getMethod().toString());
-			if(declearedClass.contains("edu.xidian.Transformer")){
+			if(declearedClass.contains("edu.xidian")){
 				G.v().out.println("Encounter the Transformer class ...skip...");
 			}else
 			doAnalysis(declaredMethod);

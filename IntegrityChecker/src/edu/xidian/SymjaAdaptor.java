@@ -120,9 +120,11 @@ public class SymjaAdaptor<N,A> {
 	
 	public void addInvokeConstraints(Map<String, String> constraintValues){
 		//G.v().out.println("flow through the beginning of a function invocation: left is "+paramValue[0]+" and right is "+paramValue[1]);
-		for(String key: constraintValues.keySet()){
-			String runtimeValue = filterString(key)+"symbolicvalue="+filterString(constraintValues.get(key));
-			result = util.evaluate(runtimeValue);
+		if(constraintValues.size()<SystemConfig.ConstraintCap){
+			for(String key: constraintValues.keySet()){
+				String runtimeValue = filterString(key)+"symbolicvalue="+filterString(constraintValues.get(key));
+				result = util.evaluate(runtimeValue);
+			}
 		}
 //		String right = filterString(paramValue[1]);
 //		String left = filterString(paramValue[0]);
