@@ -32,8 +32,10 @@ import soot.toolkits.graph.*;
 
 import java.io.BufferedWriter;
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.io.ObjectInputStream;
 import java.io.Reader;
 import java.io.Writer;
 import java.util.*;
@@ -41,6 +43,7 @@ import java.util.*;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.LineIterator;
 
+import encryptUtil.EncryptUtil;
 import soot.jimple.AssignStmt;
 import soot.jimple.CaughtExceptionRef;
 import soot.jimple.IdentityStmt;
@@ -55,6 +58,7 @@ import soot.jimple.Stmt;
 import soot.options.*;
 import soot.toolkits.graph.interaction.*;
 import soot.toolkits.scalar.FlowAnalysis;
+import thep.paillier.exceptions.BigIntegerClassNotValid;
 
 /**
  *   Abstract class that provides the fixed point iteration functionality
@@ -136,7 +140,7 @@ public abstract class ForwardFlowAnalysisVerification<N,A> extends FlowAnalysis<
         	if (currFile.isFile()&&currFile.getAbsolutePath().contains(methodSig)&&currFile.getAbsolutePath().contains("invoke_")){
              try{
             	G.v().out.println("analysis currFile "+ currFile.getAbsolutePath());
-        		fastProcessFile(currFile.getAbsolutePath());
+        		fastProcessFile(currFile.getAbsolutePath(), methodSig);
              }catch(Exception e){
             	 e.printStackTrace();
              }
@@ -160,7 +164,7 @@ public abstract class ForwardFlowAnalysisVerification<N,A> extends FlowAnalysis<
      * TODO: need to process recursion call
      */
     
-    protected void fastProcessFile(String invokeFileName)
+    protected void fastProcessFile(String invokeFileName, String methodSig)
     {
         	
         	fileSuffix = Integer.parseInt(invokeFileName.substring(invokeFileName.lastIndexOf("_")+1));
@@ -210,7 +214,7 @@ public abstract class ForwardFlowAnalysisVerification<N,A> extends FlowAnalysis<
 	        				continue;
 			        	}
 	    				postInvokeLine = invokeLine;
-	    				processInvoke(preInvokeLine, postInvokeLine);
+	    				processInvoke(preInvokeLine, postInvokeLine, methodSig);
 	    				currCallNumber = -1;
 					}else{ //find the preinvoke not find the machine post invoke, look the next
 						continue; //TODO: this implementation skips the recursive function call.
@@ -314,13 +318,42 @@ public abstract class ForwardFlowAnalysisVerification<N,A> extends FlowAnalysis<
 //    	        }
 //    	    }
 //    }
-        
-    private void processInvoke(String preInvokeLine, String postInvokeLine) {
+
+    static List<String> systemMethods = null;
+    private static boolean isEncryptionMethod(String methodName){
+    	if(systemMethods==null){
+    		systemMethods = new ArrayList<String>();
+
+        	systemMethods.add("encryptUtil.EncryptUtil: java.lang.String getAH(int)");
+    		systemMethods.add("encryptUtil.EncryptUtil: java.lang.String add(java.lang.String,java.lang.String)");
+    		
+    	}
+    	
+		for(String med: systemMethods){
+			if(methodName.contains(med)){
+				return true;
+			}
+		}
+		return false;
+		
+    }
+    
+    private void processInvoke(String preInvokeLine, String postInvokeLine, String methodSig) {
 
     	
     	InvokeValues invokeValues = new InvokeValues();
         invokeValues.processLine(preInvokeLine);
         invokeValues.processLine(postInvokeLine);
+        
+        if(isEncryptionMethod(methodSig)){
+        	try{
+        		if(EncryptSimulate(invokeValues, methodSig))
+        			throw new Exception("Encryption Simulation Failed");
+        	}catch(Exception e){
+        		e.printStackTrace();
+        	}
+        }
+        
 //        if(!branchLogIt.hasNext()){
 //			try {
 //				branchLogIt = FileUtils.lineIterator(branchFile, "UTF-8");
@@ -338,6 +371,34 @@ public abstract class ForwardFlowAnalysisVerification<N,A> extends FlowAnalysis<
         simulate(invokeValues);
         
 	}
+    
+    static EncryptUtil encryptUtil = null;
+		
+	private boolean EncryptSimulate(InvokeValues invokeValues, String methodSig) throws NumberFormatException, BigIntegerClassNotValid, IOException, ClassNotFoundException{
+    	if(encryptUtil==null){
+	       	 encryptUtil = new EncryptUtil();
+	     	FileInputStream in = new FileInputStream(SystemConfig.keyDir+"/encryptutil.object");
+	     	ObjectInputStream oi = new ObjectInputStream(in);
+	 		encryptUtil = (EncryptUtil) oi.readObject();
+	 	    oi.close();
+	 	    in.close();
+    	}
+
+		String returnValue =  invokeValues.getReturnValue();
+		ArrayList<String> paramPreValues = invokeValues.getParamPreValues();
+		String simulatReturnValue = new String();
+		if (methodSig.contains("encryptUtil.EncryptUtil: java.lang.String getAH(int)")) 
+			simulatReturnValue = encryptUtil.getAH(Integer.parseInt(paramPreValues.get(0)));
+		else if(methodSig.contains("encryptUtil.EncryptUtil: java.lang.String add(java.lang.String,java.lang.String)")) 
+			simulatReturnValue = encryptUtil.add(paramPreValues.get(0), paramPreValues.get(1));
+		else
+			return false;
+		
+		if (simulatReturnValue.equalsIgnoreCase(returnValue))
+			return true;
+		return false;
+    }
+	
 	private void simulate(InvokeValues invokeValues) {
         List<N> heads = graph.getHeads();
         constraints.clear();

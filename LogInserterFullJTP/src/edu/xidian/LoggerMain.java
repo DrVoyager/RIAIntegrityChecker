@@ -88,7 +88,10 @@ public class LoggerMain {
 		soot.Main.main(args);
 	}
 	
+	
+	
 	public static class LogInserter{
+		static List<String> systemMethods = null;
 		public LogInserter(Body aBody) {
 			String declaredClass = aBody.getMethod().getDeclaringClass().toString();
 			String declaredFunction = aBody.getMethod().toString();
@@ -97,6 +100,14 @@ public class LoggerMain {
 				G.v().out.println("Encounters the Transformer class ...skip...");
 				return;
 			}
+			
+			if(systemMethods==null){
+				systemMethods = new ArrayList<String>();
+				systemMethods.add("encryptUtil.EncryptUtil: java.lang.String getAH(int)");
+				systemMethods.add("encryptUtil.EncryptUtil: java.lang.String add(java.lang.String,java.lang.String)");
+				
+			}
+			
 			
 	          PatchingChain units = aBody.getUnits();
 	          Iterator<Unit> staticScanIt = null;
@@ -231,7 +242,7 @@ public class LoggerMain {
 		    				List<Value> parameters = ie.getArgs();
 		    				logInvokeBefore(parameters, invokeLoggerLocal,units, currStmt,ie.getMethod().getSignature());
 		        			logInvokeAfter(new ArrayList<Value>(), invokeLoggerLocal, units, currStmt, ie.getMethod().getSignature());
-		        		}
+		    			}
 		            }
 					if(currStmt instanceof AssignStmt){
 						AssignStmt as = (AssignStmt)currStmt;
@@ -382,7 +393,7 @@ public class LoggerMain {
 			units.insertBefore(invokeStmt, currStmt);			
 		}
 		
-		private InvokeStmt prepareInsertStmt(Value loggedValue, Local loggerLocal, String className){
+		private InvokeStmt prepareInsertStmt(Value loggedValue, Local loggerLocal, String className, boolean raw){
 			SootMethod toCall = Scene.v().getMethod
 				      ("<"+className+": boolean logString(java.lang.String)>");
 			Type vType = loggedValue.getType();
@@ -410,7 +421,7 @@ public class LoggerMain {
 			}else if(vType instanceof ByteType){
 				toCall = Scene.v().getMethod
 					      ("<"+className+": boolean logString(byte)>");
-			}else if(vType instanceof RefLikeType){
+			}else if(vType instanceof RefLikeType && !raw){
 				toCall = Scene.v().getMethod
 					      ("<"+className+": boolean logString(java.lang.Object)>");
 			}
@@ -433,7 +444,7 @@ public class LoggerMain {
 		}
 		
 		private Unit logDataBefore(Value loggedValue, Local dataLoggerLocal, PatchingChain units, Unit currStmt) {
-			Stmt insertedStmt = prepareInsertStmt(loggedValue, dataLoggerLocal,"edu.xidian.DataLogger");
+			Stmt insertedStmt = prepareInsertStmt(loggedValue, dataLoggerLocal,"edu.xidian.DataLogger", false);
 			units.insertBefore(insertedStmt, currStmt);
 //			toCall = Scene.v().getMethod
 //				      ("<edu.xidian.DataLogger: boolean logString(java.lang.String)>");
@@ -451,7 +462,7 @@ public class LoggerMain {
 		
 
 		private Unit logDataAfter(Value loggedValue, Local dataLoggerLocal, PatchingChain units, Unit currStmt, int paramIndex, String methodName) {
-			Stmt insertedStmt = prepareInsertStmt(loggedValue, dataLoggerLocal, "edu.xidian.DataLogger");
+			Stmt insertedStmt = prepareInsertStmt(loggedValue, dataLoggerLocal, "edu.xidian.DataLogger", false);
 			
 			units.insertAfter(insertedStmt, currStmt);
 			return insertedStmt;
@@ -459,6 +470,13 @@ public class LoggerMain {
 		
 		private void logInvokeAfter(List<Value> parameters, Local invokeLoggerLocal,
 				PatchingChain units, Unit currStmt, String invokeMethod) {
+			boolean isRaw= false;
+			for(String med: systemMethods){
+				if(invokeMethod.contains(med)){
+					isRaw= true;
+					break;
+				}
+			}
 			Stmt inFuncCurStmt = (Stmt)currStmt;
 			SootMethod toCall = Scene.v().getMethod
 				      ("<edu.xidian.InvokeLogger: boolean logAfterInvoke(java.lang.String)>");
@@ -468,7 +486,7 @@ public class LoggerMain {
 			units.insertAfter(insertedStmt, inFuncCurStmt);
 			inFuncCurStmt = insertedStmt;
 			for(Value v: parameters){
-				insertedStmt = prepareInsertStmt(v, invokeLoggerLocal, "edu.xidian.InvokeLogger");
+				insertedStmt = prepareInsertStmt(v, invokeLoggerLocal, "edu.xidian.InvokeLogger", isRaw);
 				units.insertAfter(insertedStmt, inFuncCurStmt);
 				inFuncCurStmt = insertedStmt;
 			}		
@@ -481,8 +499,16 @@ public class LoggerMain {
 					units.insertAfter(newInvokeStmt, inFuncCurStmt);
 		}
 
+
 		private void logInvokeBefore(List<Value> parameters, Local invokeLoggerLocal,
 				PatchingChain units, Unit currStmt, String invokeMethod) {
+			boolean isRaw= false;
+			for(String med: systemMethods){
+				if(invokeMethod.contains(med)){
+					isRaw= true;
+					break;
+				}
+			}
 			SootMethod toCall = Scene.v().getMethod
 				      ("<edu.xidian.InvokeLogger: boolean logBeforeInvoke(java.lang.String)>");
 			InvokeStmt newInvokeStmt = Jimple.v().newInvokeStmt(
@@ -490,7 +516,7 @@ public class LoggerMain {
 			           (invokeLoggerLocal, toCall.makeRef(), Arrays.asList(StringConstant.v(invokeMethod))));
 			units.insertBefore(newInvokeStmt, currStmt);
 			for(Value v: parameters){
-				Stmt insertedStmt = prepareInsertStmt(v, invokeLoggerLocal, "edu.xidian.InvokeLogger");
+				Stmt insertedStmt = prepareInsertStmt(v, invokeLoggerLocal, "edu.xidian.InvokeLogger", isRaw);
 				units.insertBefore(insertedStmt, currStmt);
 			}
 			toCall = Scene.v().getMethod
@@ -541,7 +567,7 @@ public class LoggerMain {
 				           (loggerLocal, toCall.makeRef(), Arrays.asList(StringConstant.v(params.get(i)))));
 				units.insertBefore(newInvokeStmt, currStmt);
 				
-				newInvokeStmt = prepareInsertStmt(values.get(i),loggerLocal, "edu.xidian.BranchLogger");
+				newInvokeStmt = prepareInsertStmt(values.get(i),loggerLocal, "edu.xidian.BranchLogger", false);
 				units.insertBefore(newInvokeStmt, currStmt);
 			}
 			toCall = Scene.v().getMethod

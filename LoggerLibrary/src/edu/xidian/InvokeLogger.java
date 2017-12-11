@@ -155,10 +155,10 @@ public class InvokeLogger {
 
 			if(str==null)
 				str = new String();
-				if(outputHash)
-					this.invokeWriter.append(str.hashCode()+deliminator);
-				else
-					this.invokeWriter.append(str+deliminator);
+//				if(outputHash)
+//					this.invokeWriter.append(str.hashCode()+deliminator);
+//				else
+			this.invokeWriter.append(str+deliminator);
 				
 		}catch(Exception e){
 			e.printStackTrace();
