@@ -155,9 +155,24 @@ public class InvokeLogger {
 
 			if(str==null)
 				str = new String();
-//				if(outputHash)
-//					this.invokeWriter.append(str.hashCode()+deliminator);
-//				else
+			
+			if(outputHash)
+				this.invokeWriter.append(str.hashCode()+deliminator);
+			else
+				this.invokeWriter.append(str+deliminator);
+				
+		}catch(Exception e){
+			e.printStackTrace();
+		}
+		return true;
+	}
+	
+	public boolean logEncryptString(String str){
+		try{
+
+			if(str==null)
+				str = new String();
+				
 			this.invokeWriter.append(str+deliminator);
 				
 		}catch(Exception e){

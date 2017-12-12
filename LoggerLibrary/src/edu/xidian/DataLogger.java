@@ -88,6 +88,20 @@ public class DataLogger {
 		return true;
 	}
 	
+	public boolean logEncryptString(String str){
+		try{
+
+			if(str==null)
+				str = new String();
+				
+			this.writer.append(str+deliminator);
+				
+		}catch(Exception e){
+			e.printStackTrace();
+		}
+		return true;
+	}
+	
 	public boolean logString(String str){
 		try{
 			//appendLogMem(str);

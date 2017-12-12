@@ -92,6 +92,7 @@ public class LoggerMain {
 	
 	public static class LogInserter{
 		static List<String> systemMethods = null;
+		
 		public LogInserter(Body aBody) {
 			String declaredClass = aBody.getMethod().getDeclaringClass().toString();
 			String declaredFunction = aBody.getMethod().toString();
@@ -346,9 +347,9 @@ public class LoggerMain {
 		}
 		
 		private char getFunctionType(String declaredFunction){
-			if(declaredFunction.contains("TokenizerMapper: void map(java.lang.Object,org.apache.hadoop.io.Text,org.apache.hadoop.mapreduce.Mapper$Context)"))
+			if(declaredFunction.contains("void map("))
 				return 'm';
-			if(declaredFunction.contains("IntSumReducer: void reduce(org.apache.hadoop.io.Text,java.lang.Iterable,org.apache.hadoop.mapreduce.Reducer$Context)"))
+			if(declaredFunction.contains("void reduce("))
 				return 'r';
 			else
 				return 'f';			
@@ -396,6 +397,10 @@ public class LoggerMain {
 		private InvokeStmt prepareInsertStmt(Value loggedValue, Local loggerLocal, String className, boolean raw){
 			SootMethod toCall = Scene.v().getMethod
 				      ("<"+className+": boolean logString(java.lang.String)>");
+			if(raw){
+				toCall = Scene.v().getMethod
+					      ("<"+className+": boolean logEncryptString(java.lang.String)>");
+			}
 			Type vType = loggedValue.getType();
 			if(vType instanceof IntType){
 				toCall = Scene.v().getMethod
@@ -421,7 +426,7 @@ public class LoggerMain {
 			}else if(vType instanceof ByteType){
 				toCall = Scene.v().getMethod
 					      ("<"+className+": boolean logString(byte)>");
-			}else if(vType instanceof RefLikeType && !raw){
+			}else if(vType instanceof RefLikeType){
 				toCall = Scene.v().getMethod
 					      ("<"+className+": boolean logString(java.lang.Object)>");
 			}
