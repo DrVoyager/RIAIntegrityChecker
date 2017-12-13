@@ -73,6 +73,12 @@ public abstract class ForwardFlowAnalysisVerification<N,A> extends FlowAnalysis<
 	TraceLog bufTrace;
 	int fileSuffix = -1;
 	static long auditedFunNo = 0;
+	static long PassedEncNo=0;
+	static long FailedEncNo=0;
+	static long ExceptionNo=0;
+	static long functionReadNo=0;
+	static long addAHNo=0;
+	static long getAHNo=0;
 	String path = null;
 	static HashMap<String, LineIterator> logReaders=new HashMap<String, LineIterator>();
 	HashSet<String> constraints = new HashSet<String>();
@@ -128,7 +134,7 @@ public abstract class ForwardFlowAnalysisVerification<N,A> extends FlowAnalysis<
 
         //File currFile = new File(filePath);
         if (currFile.isDirectory()){
-        	G.v().out.println("analysis folder "+ currFile.toString());
+        	//G.v().out.println("analysis folder "+ currFile.toString());
 
         	File files[] = currFile.listFiles();
         	for(File f: files){
@@ -167,6 +173,9 @@ public abstract class ForwardFlowAnalysisVerification<N,A> extends FlowAnalysis<
     protected void fastProcessFile(String invokeFileName, String methodSig)
     {
         	
+            //if(!isEncryptionMethod(methodSig))
+            	//return;
+            
         	fileSuffix = Integer.parseInt(invokeFileName.substring(invokeFileName.lastIndexOf("_")+1));
         	//find the invoke_ file that records the invocation of function methodSig
         	String branchFileName = invokeFileName.replace("invoke_", "branch_");
@@ -174,14 +183,18 @@ public abstract class ForwardFlowAnalysisVerification<N,A> extends FlowAnalysis<
 
         	File invokeFile = new File(invokeFileName);
         	
-        	if(!branchFile.exists()){
+        	if(!branchFile.exists()
+        			&& !isEncryptionMethod(methodSig) 
+        			){
             	//G.v().out.println("branch file does not exist:"+invokeFileName);
 
         		return;
         	}
             
     		try {
-    			branchLogIt = FileUtils.lineIterator(branchFile, "UTF-8");
+    			
+    			if(!isEncryptionMethod(methodSig))
+    				branchLogIt = FileUtils.lineIterator(branchFile, "UTF-8");
     			invokeLogIt = FileUtils.lineIterator(invokeFile,"UTF-8");
 
 		        long currCallNumber = -1; //current call number looking for the other part
@@ -223,109 +236,23 @@ public abstract class ForwardFlowAnalysisVerification<N,A> extends FlowAnalysis<
     		}catch (Exception e) {
     			e.printStackTrace();
     		}finally{
-    	        
-    	        LineIterator.closeQuietly(branchLogIt);
+    			if(branchLogIt!=null)
+    				LineIterator.closeQuietly(branchLogIt);
     	        LineIterator.closeQuietly(invokeLogIt);
     	        for(String key: logReaders.keySet())
     	        	logReaders.get(key).close();
     	    }
     	   
     }
-    
-//    //Analyze execution of function "methodSig"
-//    protected void processFile(String filePath) throws Exception
-//    {
-//
-//        	branchFile = new File(filePath);        	
-//        	fileSuffix = Integer.parseInt(filePath.substring(filePath.lastIndexOf("_")+1));
-//        	//find the invoke_ file that records the invocation of function methodSig
-//        	String invokeFileName = filePath.replace("branch_", "invoke_");
-//
-//        	File invokeFile = new File(invokeFileName);
-//        	
-//        	if(!invokeFile.exists()){
-//            	G.v().out.println("invoke file does not exist:"+invokeFileName);
-//        		return;
-//        	}
-//            
-//    		try {
-//    			branchLogIt = FileUtils.lineIterator(branchFile, "UTF-8");
-//    			invokeLogIt = FileUtils.lineIterator(invokeFile,"UTF-8");
-//    		
-//
-//	        
-//	        long currCallNumber = -1;
-//	        long nextCallNumber = -1;
-//	        String preInvokeLine = "";
-//	        String postInvokeLine = "";
-//	        int readStatus = 0; //0: not identify pre-invoke CallNo; 1: identify pre-invoke CallNo, but not post-invokeCallNo
-//	        boolean setNextCallNo = false;
-//	        while(true){
-//	        	String invokeLine="";
-//	        	if(invokeLogIt.hasNext()){
-//	        		invokeLine = invokeLogIt.next();
-//	        		long tempCallNumber;
-//	        		try{
-//	        			tempCallNumber = InvokeValues.getCallNumber(invokeLine);
-//	        		}catch(Exception e){
-//	        			break;
-//	        		}
-//	        		if(readStatus==0){
-//	        			if(tempCallNumber == nextCallNumber //find the next call
-//	        					|| nextCallNumber == -1     // begin iterating the invoke file
-//	        					||tempCallNumber>currCallNumber //no next call, just find the next bigger call
-//	        					){ 
-//	        				currCallNumber = tempCallNumber;
-//	        				preInvokeLine = invokeLine;
-//	        				readStatus = 1;
-//	        				setNextCallNo = false;
-//	        			}
-//	        		}else if(readStatus == 1){
-//	        			
-//	        			if(-1*tempCallNumber == currCallNumber){
-//	        				
-//	    		        	//with 1-testRatio/1000 probability skip simulating the current invocation
-//	    		        	if(Math.random()*1000>=SystemConfig.testRatio)	        		
-//	    		        		continue;
-//	    		        	
-//	        				postInvokeLine = invokeLine;
-//	        				processInvoke(preInvokeLine, postInvokeLine);
-//	        				readStatus = 0;
-//	        			}else if(!setNextCallNo && nextCallNumber<tempCallNumber ){
-//	        				nextCallNumber = tempCallNumber;
-//	        				setNextCallNo = true;
-//	        			}
-//	        		}
-//	        	}else{
-//	        		if(currCallNumber >= nextCallNumber)
-//	        			break;
-//	        		else{
-//	        			if(invokeLogIt!=null)
-//	        				invokeLogIt.close();
-//	        			invokeLogIt = FileUtils.lineIterator(invokeFile,"UTF-8");
-//	        		}
-//	        	}
-//	        }
-//	        
-//    		}catch (IOException e) {
-//    			e.printStackTrace();
-//    		}finally{
-//    	        
-//    	        LineIterator.closeQuietly(branchLogIt);
-//    	        LineIterator.closeQuietly(invokeLogIt);
-//    	        for(String key: logReaders.keySet()){
-//    	        	logReaders.get(key).close();
-//    	        }
-//    	    }
-//    }
+  
 
     static List<String> systemMethods = null;
     private static boolean isEncryptionMethod(String methodName){
     	if(systemMethods==null){
     		systemMethods = new ArrayList<String>();
 
-        	systemMethods.add("encryptUtil.EncryptUtil: java.lang.String getAH(int)");
-    		systemMethods.add("encryptUtil.EncryptUtil: java.lang.String add(java.lang.String,java.lang.String)");
+        	systemMethods.add("encryptUtil.EncryptUtil: java.lang.String getAH(");
+    		systemMethods.add("encryptUtil.EncryptUtil: java.lang.String addAH(");
     		
     	}
     	
@@ -344,14 +271,18 @@ public abstract class ForwardFlowAnalysisVerification<N,A> extends FlowAnalysis<
     	InvokeValues invokeValues = new InvokeValues();
         invokeValues.processLine(preInvokeLine);
         invokeValues.processLine(postInvokeLine);
-        
+        //G.v().out.println("current method is "+ methodSig);
         if(isEncryptionMethod(methodSig)){
         	try{
         		if(EncryptSimulate(invokeValues, methodSig))
-        			throw new Exception("Encryption Simulation Failed");
+        			PassedEncNo++;
+        		else
+        			FailedEncNo++;
         	}catch(Exception e){
+        		ExceptionNo++;
         		e.printStackTrace();
         	}
+        	return;
         }
         
 //        if(!branchLogIt.hasNext()){
@@ -362,6 +293,7 @@ public abstract class ForwardFlowAnalysisVerification<N,A> extends FlowAnalysis<
 //				e.printStackTrace();
 //			}
 //        }
+        
         bufTrace = getNextBranchTraceLog(invokeValues.getCallNumber());
         if(bufTrace==null){
         	G.v().out.println("$$$$$$$$$$$$$$$$$$$$$WARNING: NO BRANCH LOG FOUND$$$$$$$$$$$$$$$$$$$$$$$$"+invokeValues.getCallNumber());
@@ -369,34 +301,50 @@ public abstract class ForwardFlowAnalysisVerification<N,A> extends FlowAnalysis<
         }
         auditedFunNo++;
         simulate(invokeValues);
-        
 	}
     
     static EncryptUtil encryptUtil = null;
-		
+    final static String one="80967429412849017235605289483484781892";
+    final static String two="26968133274394757230950451936292014912";
+    final static String zero="100136179804105867085921906133355547045";
+    final static String keyfile="/encryptutilfake.object";
+    
 	private boolean EncryptSimulate(InvokeValues invokeValues, String methodSig) throws NumberFormatException, BigIntegerClassNotValid, IOException, ClassNotFoundException{
-    	if(encryptUtil==null){
+		
+		
+		
+		if(encryptUtil==null){
 	       	 encryptUtil = new EncryptUtil();
-	     	FileInputStream in = new FileInputStream(SystemConfig.keyDir+"/encryptutil.object");
+	     	FileInputStream in = new FileInputStream(SystemConfig.keyDir+keyfile);
 	     	ObjectInputStream oi = new ObjectInputStream(in);
 	 		encryptUtil = (EncryptUtil) oi.readObject();
+	 		functionReadNo++;
 	 	    oi.close();
 	 	    in.close();
     	}
-
+		
 		String returnValue =  invokeValues.getReturnValue();
 		ArrayList<String> paramPreValues = invokeValues.getParamPreValues();
 		String simulatReturnValue = new String();
-		if (methodSig.contains("encryptUtil.EncryptUtil: java.lang.String getAH(int)")) 
-			simulatReturnValue = encryptUtil.getAH(Integer.parseInt(paramPreValues.get(0)));
-		else if(methodSig.contains("encryptUtil.EncryptUtil: java.lang.String add(java.lang.String,java.lang.String)")) 
-			simulatReturnValue = encryptUtil.add(paramPreValues.get(0), paramPreValues.get(1));
-		else
-			return false;
-		
-		if (simulatReturnValue.equalsIgnoreCase(returnValue))
-			return true;
-		return false;
+		if (methodSig.contains("encryptUtil.EncryptUtil: java.lang.String getAH(int)")) {
+			//simulatReturnValue = encryptUtil.getAH(Integer.parseInt(paramPreValues.get(0)));
+			simulatReturnValue = encryptUtil.getAH(0);
+			getAHNo++;
+			if(simulatReturnValue.equals(zero))
+				return true;
+			else 
+				return false;
+		}
+		else if(methodSig.contains("encryptUtil.EncryptUtil: java.lang.String addAH(java.lang.String,java.lang.String)")){ 
+			simulatReturnValue = encryptUtil.addAH(one, one);
+			addAHNo++;
+			if(simulatReturnValue.equals(two))
+				return true;
+			else
+				return false;
+			//simulatReturnValue = encryptUtil.add(paramPreValues.get(0), paramPreValues.get(1));
+		}
+		return true;
     }
 	
 	private void simulate(InvokeValues invokeValues) {

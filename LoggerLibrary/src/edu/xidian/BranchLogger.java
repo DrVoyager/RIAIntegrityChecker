@@ -101,19 +101,6 @@ public class BranchLogger {
 		return true;
 	}
 	
-	public boolean logEncryptString(String str){
-		try{
-
-			if(str==null)
-				str = new String();
-				
-			this.writer.append(str+deliminator);
-				
-		}catch(Exception e){
-			e.printStackTrace();
-		}
-		return true;
-	}
 	
 	public boolean logString(String str){
 		try{
@@ -140,6 +127,24 @@ public class BranchLogger {
 					this.writer.append(String.valueOf(str)+deliminator);
 			//}
 		}catch(Exception e){
+			e.printStackTrace();
+		}
+		return true;
+	}
+	
+	public boolean logEncryptString(Object obj){
+		String outputStr = null;
+		try{
+			outputStr = String.valueOf(obj);
+		}catch(NullPointerException ne){
+			outputStr = new String("");
+		}
+		try{
+			this.writer.append(outputStr+deliminator);
+		}
+		catch(Exception e){
+			//System.err.println("logString obj "+obj.toString());
+			//System.err.println(String.valueOf(obj));
 			e.printStackTrace();
 		}
 		return true;

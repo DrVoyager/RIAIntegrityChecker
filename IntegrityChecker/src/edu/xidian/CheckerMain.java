@@ -48,6 +48,14 @@ public class CheckerMain {
 		
 		soot.Main.main(args);
 		G.v().out.println("########################Total Function No is "+ForwardFlowAnalysisVerification.auditedFunNo+"#########################");
+		G.v().out.println("########################Total passed encryption No is "+ForwardFlowAnalysisVerification.PassedEncNo+"#########################");
+		G.v().out.println("########################Total failed encryption No is "+ForwardFlowAnalysisVerification.FailedEncNo+"#########################");
+		G.v().out.println("########################Total exception No is "+ForwardFlowAnalysisVerification.ExceptionNo+"#########################");
+		G.v().out.println("########################Total encryption creation No is "+ForwardFlowAnalysisVerification.functionReadNo+"#########################");
+		G.v().out.println("########################Total getAH No is "+ForwardFlowAnalysisVerification.getAHNo+"#########################");
+		G.v().out.println("########################Total addAH No is "+ForwardFlowAnalysisVerification.addAHNo+"#########################");
+
+		
 	}
 
 	public static class MyAnalysis extends ForwardFlowAnalysisVerification {

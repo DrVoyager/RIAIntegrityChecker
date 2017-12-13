@@ -105,7 +105,7 @@ public class LoggerMain {
 			if(systemMethods==null){
 				systemMethods = new ArrayList<String>();
 				systemMethods.add("encryptUtil.EncryptUtil: java.lang.String getAH(int)");
-				systemMethods.add("encryptUtil.EncryptUtil: java.lang.String add(java.lang.String,java.lang.String)");
+				systemMethods.add("encryptUtil.EncryptUtil: java.lang.String addAH(java.lang.String,java.lang.String)");
 				
 			}
 			
@@ -397,10 +397,7 @@ public class LoggerMain {
 		private InvokeStmt prepareInsertStmt(Value loggedValue, Local loggerLocal, String className, boolean raw){
 			SootMethod toCall = Scene.v().getMethod
 				      ("<"+className+": boolean logString(java.lang.String)>");
-			if(raw){
-				toCall = Scene.v().getMethod
-					      ("<"+className+": boolean logEncryptString(java.lang.String)>");
-			}
+
 			Type vType = loggedValue.getType();
 			if(vType instanceof IntType){
 				toCall = Scene.v().getMethod
@@ -426,9 +423,12 @@ public class LoggerMain {
 			}else if(vType instanceof ByteType){
 				toCall = Scene.v().getMethod
 					      ("<"+className+": boolean logString(byte)>");
-			}else if(vType instanceof RefLikeType){
+			}else if(vType instanceof RefLikeType && !raw){
 				toCall = Scene.v().getMethod
 					      ("<"+className+": boolean logString(java.lang.Object)>");
+			}else if(vType instanceof RefLikeType && raw){
+				toCall = Scene.v().getMethod
+					      ("<"+className+": boolean logEncryptString(java.lang.Object)>");
 			}
 			//inserted code: loggerLocal.logString(values[i]);
 			 InvokeStmt newInvokeStmt = Jimple.v().newInvokeStmt(

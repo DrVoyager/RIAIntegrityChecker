@@ -6,9 +6,9 @@
 	<classpathentry kind="lib" path="log4j-1.2.11.jar"/>
 	<classpathentry kind="lib" path="commons-io-2.4.jar" sourcepath="/home/joe/.m2/repository/commons-io/commons-io/2.4/commons-io-2.4-sources.jar"/>
 	<classpathentry kind="lib" path="/home/joe/yuechun/sootfiles/symja-2015-09-26.jar"/>
-	<classpathentry kind="lib" path="/home/joe/Development/git/IntegrityCheck/libs/encryption.jar"/>
 	<classpathentry kind="lib" path="/home/joe/Development/git/IntegrityCheck/libs/jackson-databind-2.9.0.jar"/>
 	<classpathentry kind="lib" path="/home/joe/Development/git/IntegrityCheck/libs/javallier_2.10-0.6.0.jar"/>
 	<classpathentry kind="lib" path="/home/joe/Development/git/IntegrityCheck/libs/thep.jar"/>
+	<classpathentry kind="lib" path="/home/joe/Development/git/IntegrityCheck/libs/encryption.jar"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>
