@@ -20,7 +20,7 @@ public class BranchLogger {
 	static ArrayList<String> spillLogMem = new ArrayList<String>();
 	String fileName = null;
 	File file = null;
-	String deliminator = "d\te";
+	String deliminator = "\t";
 	
 
 	long callNumber = 0;
@@ -101,6 +101,7 @@ public class BranchLogger {
 		return true;
 	}
 	
+	
 	public boolean logString(String str){
 		try{
 			//appendLogMem(str);
@@ -126,6 +127,24 @@ public class BranchLogger {
 					this.writer.append(String.valueOf(str)+deliminator);
 			//}
 		}catch(Exception e){
+			e.printStackTrace();
+		}
+		return true;
+	}
+	
+	public boolean logEncryptString(Object obj){
+		String outputStr = null;
+		try{
+			outputStr = String.valueOf(obj);
+		}catch(NullPointerException ne){
+			outputStr = new String("");
+		}
+		try{
+			this.writer.append(outputStr+deliminator);
+		}
+		catch(Exception e){
+			//System.err.println("logString obj "+obj.toString());
+			//System.err.println(String.valueOf(obj));
 			e.printStackTrace();
 		}
 		return true;
