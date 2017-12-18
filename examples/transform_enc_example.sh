@@ -58,4 +58,5 @@ jar -cfm ../taggedExampleEnc.jar manifest.txt org edu
 
 cd ..
 scp -P 20000 ./taggedExampleEnc.jar ubuntu@222.25.188.1:./
+scp -P 20000 -r ./key ubuntu@222.25.188.1:./
 #scp -P TestHostPort ./taggedExample.jar ubuntu@TestHostIP:./

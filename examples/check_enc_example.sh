@@ -1,12 +1,17 @@
-WORK_SPACE=~/Development/git/integrity_check/examples
+WORK_SPACE=/home/ubuntu/Development/git/integrity_check/examples
 export WORK_SPACE
 SOOT_HOME=$WORK_SPACE/../sootfiles
 HADOOP_HOME=$WORK_SPACE/../applications/hadoop-1.0.2
-
 SOURCE_DIR=$WORK_SPACE/hadoop-examples-1.0.4-enc
-
-LOGGER_LIB_DIR=$WORK_SPACE/../LoggerLibrary
 CHECKER_DIR=$WORK_SPACE/../IntegrityChecker
+
+cd $CHECKER_DIR/bin
+jar -cfm $WORK_SPACE/Checker.jar $CHECKER_DIR/src/manifest.txt edu
+
+rm -rf $SOURCE_DIR/*
+cp $HADOOP_HOME/../hadoop-examples-1.0.4-Encryption.jar ./
+unzip  hadoop-examples-1.0.4-Encryption.jar -d $SOURCE_DIR
+unzip  ./lib/encryption.jar -d $SOURCE_DIR
 
 cd $WORK_SPACE
 
