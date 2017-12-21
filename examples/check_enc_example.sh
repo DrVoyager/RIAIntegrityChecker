@@ -19,7 +19,7 @@ cd $WORK_SPACE
 
 rm -rf collectedLogs
 mkdir collectedLogs
-copy log files to collectedLogs
+#copy log files to collectedLogs
 scp -r -P 20000 ubuntu@222.25.188.1:~/collectedLogs ./collectedLogs
 
 
