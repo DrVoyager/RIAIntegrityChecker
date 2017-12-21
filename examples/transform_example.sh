@@ -14,12 +14,15 @@ SOURCE_DIR=$WORK_SPACE/hadoop-examples-1.0.2
 DEST_DIR=$WORK_SPACE/hadoop-examples-1.0.2-out
 PACKAGE_DIR=$WORK_SPACE/hadoop-examples-1.0.2-package
 
-cd $LOGGER_LIB_DIR/bin
+cd $LOGGER_LIB_DIR
+ant 
+cp dist/LoggerLibrary.jar $WORK_SPACE/LoggerLibrary.jar
+#jar -cfm $WORK_SPACE/LoggerLibrary.jar $LOGGER_LIB_DIR/src/manifest.txt edu 
 
-jar -cfm $WORK_SPACE/LoggerLibrary.jar $LOGGER_LIB_DIR/src/manifest.txt edu 
-
-cd $INSERTER_DIR/bin
-jar -cfm $WORK_SPACE/LogInserter.jar $INSERTER_DIR/src/manifest.txt edu
+cd $INSERTER_DIR
+ant 
+cp dist/LogInserter.jar $WORK_SPACE/LogInserter.jar
+#jar -cfm $WORK_SPACE/LogInserter.jar $INSERTER_DIR/src/manifest.txt edu
 
 cd $WORK_SPACE
 
