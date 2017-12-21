@@ -1,0 +1,60 @@
+<project default="jar" name="LogInserter">    
+
+    <property name="lib.dir" value="lib"/>  
+    <property name="sootlib.dir" value="../sootfiles"/>
+    <property name="encryptionlib.dir" value="../libs"/>
+    <property name="src.dir" value="src"/>    
+    <property name="classes.dir" value="bin"/>    
+    <property name="output.dir" value="dist"/>    
+    <property name="jarname" value="LogInserter.jar"/>       
+       
+    <path id="lib-classpath">    
+        <fileset dir="${lib.dir}">    
+            <include name="**/*.jar"/>    
+        </fileset>  
+        <fileset dir="${sootlib.dir}">    
+            <include name="**/*.jar"/>    
+        </fileset> 
+        <fileset dir="${encryptionlib.dir}">    
+            <include name="**/*.jar"/>    
+        </fileset>
+    </path>    
+       
+    <target name="init">    
+        <mkdir dir="${classes.dir}"/>    
+        <mkdir dir="${output.dir}"/>    
+    </target>    
+       
+    <target name="compile" depends="init">    
+        <javac srcdir="${src.dir}" destdir="${classes.dir}" excludes="**/test/**">    
+            <compilerarg line="-encoding UTF-8"/>    
+            <classpath refid="lib-classpath"/>    
+        </javac>    
+    </target>    
+        
+    <target name="jar" depends="compile">    
+        <copy todir="${output.dir}/lib">    
+            <fileset dir="${lib.dir}"/>    
+        </copy>    
+        <pathconvert property="mf.classpath" pathsep=" ">    
+            <mapper>    
+                <chainedmapper>      
+                    <flattenmapper/>      
+                    <globmapper from="*" to="lib/*"/>    
+                </chainedmapper>    
+            </mapper>    
+            <path refid="lib-classpath"/>    
+         </pathconvert>     
+        <jar destfile="${output.dir}/${jarname}" basedir="${classes.dir}">    
+            <manifest>      
+                <attribute name="Class-Path" value="${mf.classpath}"/>    
+            </manifest>    
+        </jar>    
+    </target>  
+
+    <target name="clean">
+        <delete dir="${classes.dir}"/>
+	<delete dir="${output.dir}"/>
+    </target>  
+</project>    
+
