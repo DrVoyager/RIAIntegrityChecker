@@ -1,4 +1,4 @@
-WORK_SPACE=/home/joe/Development/git/IntegrityCheck/examples
+WORK_SPACE=/home/ubuntu/Development/git/integrity_check/examples
 export WORK_SPACE
 SOOT_HOME=$WORK_SPACE/../sootfiles
 HADOOP_HOME=$WORK_SPACE/../applications/hadoop-1.0.2

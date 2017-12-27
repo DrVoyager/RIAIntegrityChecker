@@ -307,7 +307,7 @@ public abstract class ForwardFlowAnalysisVerification<N,A> extends FlowAnalysis<
     final static String one="80967429412849017235605289483484781892";
     final static String two="26968133274394757230950451936292014912";
     final static String zero="100136179804105867085921906133355547045";
-    final static String keyfile="/encryptutilfake.object";
+    final static String keyfile="/key/encryptutil.object";
     
 	private boolean EncryptSimulate(InvokeValues invokeValues, String methodSig) throws NumberFormatException, BigIntegerClassNotValid, IOException, ClassNotFoundException{
 		

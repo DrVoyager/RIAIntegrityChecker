@@ -1,7 +1,7 @@
 # set up your JAVA_HOME 
 
 # set up the current example directory
-WORK_SPACE=/home/joe/Development/git/IntegrityCheck/examples
+WORK_SPACE=/home/mia/Development/git/integrity_check/examples
 
 SOOT_HOME=$WORK_SPACE/../sootfiles
 HADOOP_HOME=$WORK_SPACE/../applications/hadoop-1.0.2

@@ -10,12 +10,12 @@ ant
 cp dist/Checker.jar $WORK_SPACE/Checker.jar
 #jar -cfm $WORK_SPACE/Checker.jar $CHECKER_DIR/src/manifest.txt edu
 
+cd $WORK_SPACE
+
 rm -rf $SOURCE_DIR/*
 cp $HADOOP_HOME/../hadoop-examples-1.0.4-Encryption.jar ./
 unzip  hadoop-examples-1.0.4-Encryption.jar -d $SOURCE_DIR
 unzip  ./lib/encryption.jar -d $SOURCE_DIR
-
-cd $WORK_SPACE
 
 rm -rf collectedLogs
 mkdir collectedLogs
